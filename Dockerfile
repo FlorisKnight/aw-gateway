@@ -1,8 +1,8 @@
 FROM debian:buster-slim
 
 ENV GRPCVERSION 1.24.0
-ENV TYKVERSION 3.0.1~125.02f139c
-ENV TYKLANG ""
+ENV TYKVERSION 3.0.1
+ENV TYKLANG "-python"
 
 LABEL Description="Tyk Gateway docker image" Vendor="Tyk" Version=$TYKVERSION
 
@@ -24,14 +24,16 @@ RUN apt-get update \
  && apt-get purge -y build-essential \
  && apt-get autoremove -y \
  && rm -rf /root/.cache
-
 # The application RUN command is separated from the dependencies to enable app updates to use docker cache for the deps
 RUN echo "deb https://packagecloud.io/tyk/tyk-gateway/debian/ buster main" | tee /etc/apt/sources.list.d/tyk_tyk-gateway.list \
  && apt-get update \
  && apt-get install --allow-unauthenticated -f --force-yes -y tyk-gateway=$TYKVERSION \
  && rm -rf /var/lib/apt/lists/*
 
+RUN ( cd opt/tyk-gateway/coprocess/python/ ; pip install requests)
+
 COPY ./tyk.standalone.conf /opt/tyk-gateway/tyk.conf
+COPY ./apps /opt/tyk-gateway/apps
 COPY ./entrypoint.sh /opt/tyk-gateway/entrypoint.sh
 
 VOLUME ["/opt/tyk-gateway/"]
